@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::fs;
 use anyhow::{Result, Context};
-use directories::UserConfigDir;
+use directories::BaseDirs;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -66,8 +66,9 @@ impl Settings {
 }
 
 fn get_config_dir() -> Result<PathBuf> {
-    UserConfigDir::ok_or_else(|| anyhow::anyhow!("No config directory"))
-        .map(|d| d.to_path_buf())
+    BaseDirs::new()
+        .ok_or_else(|| anyhow::anyhow!("No config directory"))
+        .map(|d| d.config_dir().to_path_buf())
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

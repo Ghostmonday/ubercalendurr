@@ -1,48 +1,42 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum CoreError {
-    #[error("Validation error: {0}")]
-    ValidationError(String),
+pub enum AppError {
+    #[error("Database error: {0}")]
+    Database(String),
 
-    #[error("Parse error: {0}")]
-    ParseError(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
+
+    #[error("AI extraction error: {0}")]
+    Ai(String),
 
     #[error("IO error: {0}")]
-    IoError(String),
+    Io(String),
 
-    #[error("JSON error: {0}")]
-    JsonError(String),
+    #[error("Unauthorized: {0}")]
+    Auth(String),
 
-    #[error("Database error: {0}")]
-    DatabaseError(String),
-
-    #[error("API error: {0}")]
-    ApiError(String),
-
-    #[error("Not found: {0}")]
-    NotFound(String),
-
-    #[error("Unknown error: {0}")]
-    Unknown(String),
+    #[error("Resource not found")]
+    NotFound,
 }
 
-pub type Result<T> = std::result::Result<T, CoreError>;
+pub type AppResult<T> = std::result::Result<T, AppError>;
 
-impl From<std::io::Error> for CoreError {
+impl From<std::io::Error> for AppError {
     fn from(e: std::io::Error) -> Self {
-        CoreError::IoError(e.to_string())
+        AppError::Io(e.to_string())
     }
 }
 
-impl From<serde_json::Error> for CoreError {
+impl From<serde_json::Error> for AppError {
     fn from(e: serde_json::Error) -> Self {
-        CoreError::JsonError(e.to_string())
+        AppError::Validation(format!("JSON error: {}", e))
     }
 }
 
-impl From<uuid::Error> for CoreError {
+impl From<uuid::Error> for AppError {
     fn from(e: uuid::Error) -> Self {
-        CoreError::ParseError(e.to_string())
+        AppError::Validation(format!("UUID error: {}", e))
     }
 }

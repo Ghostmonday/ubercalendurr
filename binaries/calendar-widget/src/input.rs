@@ -1,48 +1,55 @@
 use std::collections::VecDeque;
-use crate::input::parser::InputParser;
+use std::sync::Arc;
 
-pub mod parser {
-    use regex::Regex;
-    use once_cell::sync::Lazy;
+pub mod parser;
 
-    pub struct InputParser;
+use parser::{SimpleParser, ParsedEvent};
 
-    impl InputParser {
-        pub fn is_json(&self, input: &str) -> bool {
-            let trimmed = input.trim();
-            trimmed.starts_with('{') && trimmed.ends_with('}')
-        }
+pub enum ParserStrategy {
+    SimpleParser,
+    AIParser,
+}
 
-        pub fn is_command(&self, input: &str) -> bool {
-            input.starts_with('/')
-        }
+pub struct CommandParser;
 
-        pub fn parse_command(&self, input: &str) -> Option<Command> {
-            let parts: Vec<&str> = input.splitn(2, ' ').collect();
-            match parts[0] {
-                "/help" => Some(Command::Help),
-                "/today" => Some(Command::ShowToday),
-                "/search" => Some(Command::Search(parts.get(1).map(|s| s.to_string()).unwrap_or_default())),
-                "/settings" => Some(Command::Settings),
-                "/clear" => Some(Command::Clear),
-                "/exit" | "/quit" => Some(Command::Exit),
-                _ => None,
-            }
-        }
+impl CommandParser {
+    pub fn is_json(&self, input: &str) -> bool {
+        let trimmed = input.trim();
+        trimmed.starts_with('{') && trimmed.ends_with('}')
     }
 
-    pub enum Command<'a> {
-        Help,
-        ShowToday,
-        Search(String),
-        Settings,
-        Clear,
-        Exit,
+    pub fn is_command(&self, input: &str) -> bool {
+        input.starts_with('/')
+    }
+
+    pub fn parse_command(&self, input: &str) -> Option<Command> {
+        let parts: Vec<&str> = input.splitn(2, ' ').collect();
+        match parts[0] {
+            "/help" => Some(Command::Help),
+            "/today" => Some(Command::ShowToday),
+            "/search" => Some(Command::Search(parts.get(1).map(|s| s.to_string()).unwrap_or_default())),
+            "/settings" => Some(Command::Settings),
+            "/clear" => Some(Command::Clear),
+            "/export" => Some(Command::Export(parts.get(1).map(|s| s.to_string()).unwrap_or_default())),
+            "/exit" | "/quit" => Some(Command::Exit),
+            _ => None,
+        }
     }
 }
 
+pub enum Command {
+    Help,
+    ShowToday,
+    Search(String),
+    Settings,
+    Clear,
+    Export(String),
+    Exit,
+}
+
 pub struct InputHandler {
-    parser: InputParser,
+    simple_parser: SimpleParser,
+    command_parser: CommandParser,
     input_history: VecDeque<String>,
     history_position: Option<usize>,
 }
@@ -50,10 +57,22 @@ pub struct InputHandler {
 impl InputHandler {
     pub fn new() -> Self {
         Self {
-            parser: InputParser,
+            simple_parser: SimpleParser,
+            command_parser: CommandParser,
             input_history: VecDeque::with_capacity(100),
             history_position: None,
         }
+    }
+
+    pub fn parse(&self, input: &str) -> Result<ParsedEvent, String> {
+        let trimmed = input.trim();
+
+        if trimmed.is_empty() {
+            return Err("Empty input".to_string());
+        }
+
+        // Try SimpleParser first (always works offline)
+        self.simple_parser.parse(trimmed)
     }
 
     pub fn handle_input(&mut self, input: &str) -> InputResult {
@@ -63,27 +82,26 @@ impl InputHandler {
             return InputResult::Clear;
         }
 
-        if let Some(command) = self.parser.parse_command(trimmed) {
+        if let Some(command) = self.command_parser.parse_command(trimmed) {
             return self.execute_command(command);
         }
 
-        if self.parser.is_json(trimmed) {
+        if self.command_parser.is_json(trimmed) {
             return InputResult::Info("JSON input detected".to_string());
         }
 
         InputResult::Processing(trimmed.to_string())
     }
 
-    fn execute_command(&self, command: parser::Command<'_>) -> InputResult {
+    fn execute_command(&self, command: Command) -> InputResult {
         match command {
-            parser::Command::Help => InputResult::ShowHelp,
-            parser::Command::ShowToday => InputResult::Info("Showing today's events".to_string()),
-            parser::Command::Search(query) => InputResult::Search(query),
-            parser::Command::Settings => InputResult::OpenSettings,
-            parser::Command::Clear => {
-                InputResult::Clear
-            }
-            parser::Command::Exit => InputResult::Exit,
+            Command::Help => InputResult::ShowHelp,
+            Command::ShowToday => InputResult::Info("Showing today's events".to_string()),
+            Command::Search(query) => InputResult::Search(query),
+            Command::Settings => InputResult::OpenSettings,
+            Command::Clear => InputResult::Clear,
+            Command::Export(format) => InputResult::Export(format),
+            Command::Exit => InputResult::Exit,
         }
     }
 
@@ -117,6 +135,7 @@ pub enum InputResult {
     Search(String),
     OpenSettings,
     Clear,
+    Export(String),
     Exit,
     Error(String),
 }

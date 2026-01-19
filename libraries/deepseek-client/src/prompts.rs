@@ -28,8 +28,42 @@ You must output a JSON object:
     "reminder": null or {...},
     "location": null or {...},
     "tags": [],
-    "clarificationQuestions": []
+    "metadata": {},
+    "clarification_needed": null or "brief question"
 }
+
+## World View (HARDCODED RULES)
+These rules are MANDATORY and must be applied:
+
+### Projects & Companies:
+- "S-DNA" or "s-dna" or "SDN" → category: "work", metadata.project: "S-DNA"
+- "KryptoClaw" or "kryptoclaw" → category: "work", metadata.project: "KryptoClaw"
+- "Neural Draft" or "neural" → category: "work", metadata.company: "Neural Draft LLC"
+
+### Default Inference (NO QUESTIONS):
+- "lunch" → time: "12:00", category: "social"
+- "dinner" → time: "18:00", category: "social"
+- "morning" → time: "09:00"
+- "afternoon" → time: "14:00"
+- "evening" → time: "18:00"
+- Missing time → infer from context or use "12:00" as default
+- Missing date → use today's date
+- Missing priority → "medium"
+- Missing category → infer from content or use "personal"
+
+### Priority Detection:
+- "urgent", "critical", "asap", "deadline" → "urgent"
+- "important", "priority" → "high"
+- "maybe", "tentative", "optional" → "low"
+- Default → "medium"
+
+### Category Detection:
+- Work terms (meeting, call, sync, work, review) → "work"
+- Medical terms (doctor, dentist, health, appointment) → "health"
+- Social terms (lunch, dinner, coffee, meet) → "social"
+- Financial terms (bill, payment, invoice) → "finance"
+- Learning terms (study, class, course) → "education"
+- Default → "personal"
 
 ## Rules
 1. Extract event title - focus on the "what"
@@ -38,28 +72,15 @@ You must output a JSON object:
    - "tomorrow" = current date + 1
    - "next [day]" = upcoming occurrence
 3. Times in 24-hour HH:MM format
-4. Infer defaults:
-   - Lunch = 12:00
-   - Morning meetings = 9:00
-   - Evening events = 18:00
-5. Priority:
-   - "important", "critical", "urgent" → high/urgent
-   - Default: "medium"
-6. Categories:
-   - Work terms → work
-   - Medical terms → health
-   - Money terms → finance
-   - Social terms → social
-   - Learning terms → education
-   - Default: "personal"
+4. ALWAYS infer defaults - never ask questions unless date is literally impossible
+5. Set clarification_needed ONLY if date cannot be determined at all
 
-## Ambiguity Handling
-If unclear, set field to null and add to "clarificationQuestions":
-- "I see 'lunch next week'—which day works best?"
-- "What time should I schedule this?"
-- "Should this be recurring?"
+## Metadata Extraction
+- Extract project names (S-DNA, KryptoClaw) into metadata.project
+- Extract company names (Neural Draft LLC) into metadata.company
+- Set metadata.source = "AI_Extraction"
 
-Output ONLY valid JSON:"#.to_string()
+Output ONLY valid JSON, no markdown formatting:"#.to_string()
     }
 
     pub fn build_extraction_prompt(&self, user_input: &str) -> Vec<ChatMessage> {

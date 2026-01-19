@@ -12,15 +12,12 @@ mod storage;
 mod api;
 mod input;
 mod ui;
-mod ipc;
+mod export;
+mod notifications;
 
 use crate::app::App;
 use crate::config::Settings;
 use crate::storage::Repository;
-use crate::api::DeepSeekClient;
-
-#[global_allocator]
-static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn main() -> Result<()> {
     let subscriber = FmtSubscriber::builder()
@@ -44,7 +41,9 @@ fn main() -> Result<()> {
 
     info!("UberCalendurr Widget initialized successfully");
 
-    app.run()?;
+    let rt = tokio::runtime::Runtime::new()
+        .context("Failed to create tokio runtime")?;
+    rt.block_on(app.run())?;
 
     state.save()?;
 
@@ -52,8 +51,9 @@ fn main() -> Result<()> {
 }
 
 fn get_config_path() -> Result<PathBuf> {
-    let config_dir = directories::UserConfigDir
-        .ok_or_else(|| anyhow::anyhow!("Unable to determine config directory"))?
+    let config_dir = directories::BaseDirs::new()
+        .ok_or_else(|| anyhow::anyhow!("No config directory"))?
+        .config_dir()
         .join("ubercalendurr");
     
     std::fs::create_dir_all(&config_dir)
@@ -65,8 +65,9 @@ fn get_config_path() -> Result<PathBuf> {
 #[derive(Clone)]
 struct AppState {
     settings: Arc<Settings>,
-    repository: Arc<Repository>,
-    deepseek_client: Arc<DeepSeekClient>,
+    repository: Repository,
+    deepseek_client: Option<Arc<deepseek_client::DeepSeekClient>>,
+    notification_service: Arc<notifications::NotificationService>,
     input_buffer: Arc<std::sync::RwLock<String>>,
     processing_state: Arc<std::sync::RwLock<ProcessingState>>,
 }
@@ -81,13 +82,40 @@ enum ProcessingState {
 
 impl AppState {
     fn new(settings: &Settings) -> Result<Self> {
-        let repository = Arc::new(Repository::new(&settings.database_path)?);
-        let deepseek_client = Arc::new(DeepSeekClient::new(&settings.deepseek_api_key)?);
+        let repository = Repository::new(&settings.database_path)?;
+        
+        // Make AI client optional - app works without API key
+        let deepseek_client = if !settings.deepseek_api_key.is_empty() {
+            let config = deepseek_client::DeepSeekConfig {
+                api_key: settings.deepseek_api_key.clone(),
+                ..Default::default()
+            };
+            match deepseek_client::DeepSeekClient::new(config) {
+                Ok(client) => {
+                    info!("DeepSeek client initialized successfully");
+                    Some(Arc::new(client))
+                }
+                Err(e) => {
+                    info!("DeepSeek client initialization failed: {}. Continuing without AI.", e);
+                    None
+                }
+            }
+        } else {
+            info!("No DeepSeek API key provided. Using SimpleParser only.");
+            None
+        };
 
+        // Initialize notification service
+        let notification_service = Arc::new(notifications::NotificationService::new(
+            settings.notifications.enabled,
+            settings.notifications.play_sound,
+        ));
+        
         Ok(Self {
             settings: Arc::new(settings.clone()),
             repository,
             deepseek_client,
+            notification_service,
             input_buffer: Arc::new(std::sync::RwLock::new(String::new())),
             processing_state: Arc::new(std::sync::RwLock::new(ProcessingState::Idle)),
         })
