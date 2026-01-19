@@ -173,14 +173,7 @@ impl SimpleParser {
     fn detect_category(input: &str) -> String {
         let input_lower = input.to_lowercase();
         
-        // YOUR WORLD VIEW HARDCODED
-        if input_lower.contains("s-dna") || input_lower.contains("sdn") {
-            "work".to_string()
-        } else if input_lower.contains("kryptoclaw") || input_lower.contains("crypto") {
-            "work".to_string()
-        } else if input_lower.contains("neural draft") || input_lower.contains("neural") {
-            "work".to_string()
-        } else if input_lower.contains("lunch") || input_lower.contains("dinner") || 
+        if input_lower.contains("lunch") || input_lower.contains("dinner") || 
                   input_lower.contains("coffee") || input_lower.contains("meet") {
             "social".to_string()
         } else if input_lower.contains("doctor") || input_lower.contains("dentist") || 
@@ -197,16 +190,6 @@ impl SimpleParser {
     fn extract_project_metadata(input: &str) -> serde_json::Value {
         let mut metadata = serde_json::json!({});
         let input_lower = input.to_lowercase();
-        
-        if input_lower.contains("s-dna") || input_lower.contains("sdn") {
-            metadata["project"] = serde_json::Value::String("S-DNA".to_string());
-        }
-        if input_lower.contains("kryptoclaw") {
-            metadata["project"] = serde_json::Value::String("KryptoClaw".to_string());
-        }
-        if input_lower.contains("neural draft") {
-            metadata["company"] = serde_json::Value::String("Neural Draft LLC".to_string());
-        }
         
         metadata["source"] = serde_json::Value::String("SimpleParser".to_string());
         metadata
@@ -369,33 +352,6 @@ mod tests {
         let parser = SimpleParser;
         let result = parser.parse("Dinner in the evening").unwrap();
         assert_eq!(result.time, Some("18:00".to_string()));
-    }
-    
-    #[test]
-    fn test_project_metadata_sdna() {
-        let parser = SimpleParser;
-        let result = parser.parse("S-DNA sync tomorrow").unwrap();
-        
-        assert_eq!(result.metadata["project"], "S-DNA");
-        assert_eq!(result.category, "work");
-    }
-    
-    #[test]
-    fn test_project_metadata_kryptoclaw() {
-        let parser = SimpleParser;
-        let result = parser.parse("KryptoClaw review next week").unwrap();
-        
-        assert_eq!(result.metadata["project"], "KryptoClaw");
-        assert_eq!(result.category, "work");
-    }
-    
-    #[test]
-    fn test_project_metadata_neural_draft() {
-        let parser = SimpleParser;
-        let result = parser.parse("Neural Draft standup tomorrow").unwrap();
-        
-        assert_eq!(result.metadata["company"], "Neural Draft LLC");
-        assert_eq!(result.category, "work");
     }
     
     #[test]

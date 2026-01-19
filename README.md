@@ -1,6 +1,6 @@
 # UberCalendurr
 
-> **Your personal time ledger with zero-friction capture** — AI-powered calendar that works offline, understands your world, and keeps your data sovereign.
+> **Your personal time ledger with zero-friction capture** — AI-powered calendar that works offline and keeps your data sovereign.
 
 UberCalendurr is a dual-interface calendar application that transforms natural language into structured events. Built with Rust and Tauri, it combines a lightning-fast terminal widget for quick capture with a beautiful GUI for comprehensive overview—all powered by a local SQLite database.
 
@@ -10,7 +10,6 @@ UberCalendurr is a dual-interface calendar application that transforms natural l
 
 - **Offline First**: SimpleParser works without internet—AI is optional enhancement
 - **Zero-Friction Capture**: Type "Lunch tomorrow at 2pm" and it's saved in 2 seconds
-- **Your World View**: Hardcoded intelligence for S-DNA, KryptoClaw, Neural Draft LLC
 - **Data Sovereignty**: SQLite is the single source of truth—export anytime, anywhere
 - **Dual Interface**: Terminal for speed, GUI for overview
 
@@ -27,11 +26,12 @@ UberCalendurr is a dual-interface calendar application that transforms natural l
 
 - **AIParser** (Optional): DeepSeek integration for advanced parsing when API key is provided
 
-### 🧠 Project Intelligence
-Auto-tags events based on your projects:
-- **S-DNA** → Work category, project: S-DNA
-- **KryptoClaw** → Work category, project: KryptoClaw  
-- **Neural Draft** → Work category, company: Neural Draft LLC
+### 🧠 Smart Categorization
+Auto-classifies events by category:
+- **work** → meetings, calls, syncs
+- **social** → lunch, dinner, coffee
+- **health** → doctor, dentist, appointments
+- **personal** → everything else
 
 Your calendar becomes a **time-allocation ledger**—track exactly where your hours go.
 
@@ -45,8 +45,8 @@ Your calendar becomes a **time-allocation ledger**—track exactly where your ho
 #### Terminal Widget (`calendar-widget`)
 Lightning-fast command-line interface for rapid event capture:
 ```bash
-📅> S-DNA sync tomorrow at 2pm
-✅ [2026-01-19 14:00] S-DNA sync (work) — Saved.
+📅> Meeting tomorrow at 2pm
+✅ [2026-01-19 14:00] Meeting tomorrow (work) — Saved.
 
 📅> Lunch with Sarah next Tuesday
 ✅ [2026-01-21 12:00] Lunch with Sarah (social) — Saved.
@@ -123,11 +123,8 @@ cargo run --bin calendar-widget
 **Natural Language Examples:**
 ```
 📅> Meeting tomorrow at 9am
-📅> KryptoClaw review next Friday
-📅> Doctor appointment in 2 weeks
-📅> S-DNA sync Monday morning
 📅> Lunch with team at noon
-📅> Neural Draft standup every Monday
+📅> Weekly sync every Friday
 ```
 
 **Commands:**
@@ -189,7 +186,6 @@ User Input → SimpleParser/AIParser → CalendarEvent → SQLite Database
 2. **Synchronous Repository**: SQLite operations are synchronous, wrapped with `spawn_blocking` in async contexts
 3. **Offline-First Parsing**: SimpleParser always works, AIParser is optional enhancement
 4. **Unified Error Type**: Single `AppError` across all crates for consistent error handling
-5. **Hardcoded Worldview**: Project metadata extraction is deterministic, not dependent on AI
 
 ---
 
@@ -234,10 +230,10 @@ DeepSeek API integration is **completely optional**. The app works fully offline
 2. Set `deepseek_api_key` in settings (or environment variable)
 3. AIParser will be used as fallback if SimpleParser fails
 
-**Worldview Hardcoded in Prompts:**
-- S-DNA, KryptoClaw, Neural Draft LLC recognition
-- Project metadata extraction rules
-- Default inference (no clarification questions unless impossible)
+**Features:**
+- Advanced natural language understanding
+- Context-aware date and time extraction
+- Smart categorization
 
 ---
 
@@ -305,7 +301,6 @@ npm test
 ## 🎯 Roadmap
 
 ### Completed ✅
-- [x] Single-process architecture (removed IPC)
 - [x] Complete database schema with all CalendarEvent fields
 - [x] SimpleParser with regex-based offline parsing
 - [x] Optional AI integration (DeepSeek)
@@ -313,7 +308,7 @@ npm test
 - [x] Tauri GUI with real backend connection
 - [x] Export functionality (JSON, CSV, ICS)
 - [x] Unified error handling
-- [x] Project metadata extraction
+- [x] Smart categorization
 - [x] Date navigation in GUI
 - [x] Conflict detection
 - [x] Basic recurring events

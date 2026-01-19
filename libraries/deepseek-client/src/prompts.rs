@@ -32,14 +32,6 @@ You must output a JSON object:
     "clarification_needed": null or "brief question"
 }
 
-## World View (HARDCODED RULES)
-These rules are MANDATORY and must be applied:
-
-### Projects & Companies:
-- "S-DNA" or "s-dna" or "SDN" → category: "work", metadata.project: "S-DNA"
-- "KryptoClaw" or "kryptoclaw" → category: "work", metadata.project: "KryptoClaw"
-- "Neural Draft" or "neural" → category: "work", metadata.company: "Neural Draft LLC"
-
 ### Default Inference (NO QUESTIONS):
 - "lunch" → time: "12:00", category: "social"
 - "dinner" → time: "18:00", category: "social"
@@ -76,9 +68,7 @@ These rules are MANDATORY and must be applied:
 5. Set clarification_needed ONLY if date cannot be determined at all
 
 ## Metadata Extraction
-- Extract project names (S-DNA, KryptoClaw) into metadata.project
-- Extract company names (Neural Draft LLC) into metadata.company
-- Set metadata.source = "AI_Extraction"
+Set metadata.source = "AI_Extraction"
 
 Output ONLY valid JSON, no markdown formatting:"#.to_string()
     }

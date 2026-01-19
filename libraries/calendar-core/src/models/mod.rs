@@ -496,22 +496,22 @@ mod tests {
     #[test]
     fn test_from_parsed_with_metadata() {
         let event = CalendarEvent::from_parsed(
-            "S-DNA sync".to_string(),
+            "Team meeting".to_string(),
             "2026-01-20".to_string(),
             Some("14:00".to_string()),
             Some("15:00".to_string()),
             None,
             "high".to_string(),
             "work".to_string(),
-            vec!["sync".to_string()],
-            serde_json::json!({"project": "S-DNA"}),
+            vec!["meeting".to_string()],
+            serde_json::json!({"project": "DemoProject"}),
             None,
         );
         
-        assert_eq!(event.event, "S-DNA sync");
+        assert_eq!(event.event, "Team meeting");
         assert_eq!(event.priority, Priority::High);
         assert_eq!(event.category, Category::Work);
-        assert_eq!(event.metadata["project"], "S-DNA");
+        assert_eq!(event.metadata["project"], "DemoProject");
     }
     
     #[test]
